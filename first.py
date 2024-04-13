@@ -101,6 +101,9 @@ def batch2img(batch,w,h):
     return torch.reshape(batch, (w, h, 3))
 
 
+
+
+
 img,coords=load_image_and_coordinates("image.png")
 
 h,w,_=img.shape
@@ -114,8 +117,23 @@ print(img.shape,coords.shape)
 print(img2batch(img).shape,img2batch(coords).shape)
 
 
-model=create_model().to(device)
+
 X=img2batch(coords).to(device)
 Y=img2batch(img).to(device)
 
-train_model(model,X,Y)
+
+num_epochs=1000
+model=create_model().to(device)
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+for epoch in range(num_epochs):
+    optimizer.zero_grad()
+    outputs = model(X)
+    loss = criterion(outputs, Y)
+    loss.backward()
+    optimizer.step()
+    report=f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}'
+    st.write(report)
+    print(report)
+
+
