@@ -39,8 +39,11 @@ def create_model():
 # Titolo fisso
 st.title("Neural Network Image Prediction")
 # Due placeholder fissi per l'immagine
-image_placeholder1 = st.empty()
-image_placeholder2 = st.empty()
+# Crea due colonne per le immagini affiancate
+col1, col2 = st.columns(2)
+image_placeholder1 = col1.empty()
+image_placeholder2 = col2.empty()
+report_placeholder=st.empty()
 
 # Funzione per addestrare il modello
 def train_model(model, X, Y, num_epochs=1000):
@@ -65,13 +68,20 @@ def show_images(original, predicted):
 def load_image_as_tensor(file_name,scale=0.3):
     # Carica l'immagine utilizzando OpenCV
     image = cv2.imread(file_name)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Converte il formato dei colori da BGR a RGB
+    #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Converte il formato dei colori da BGR a RGB
     
     # Ottieni le dimensioni dell'immagine
     h, w, _ = image.shape
     
     image=cv2.resize(image,(int(w*scale),int(h*scale)))
     return torch.tensor(image, dtype=torch.float32)  # (3, h, w)
+
+def tensor_to_image(tensor):
+    # Assicurati che i valori siano nel range 0-255
+    img_array = np.clip(tensor.cpu().detach().numpy(), 0, 255).astype(np.uint8)
+
+    # Converte l'array NumPy in un'immagine nel formato corretto (BGR) utilizzando OpenCV
+    return cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
 
 
 def generate_coords_tensor(w,h):
@@ -98,13 +108,13 @@ def img2batch(img):
     return img.view(-1, img.shape[-1]).unsqueeze(0)
 
 def batch2img(batch,w,h):
-    return torch.reshape(batch, (w, h, 3))
+    return torch.reshape(batch, (h,w, 3))
 
 
 
 
 
-img,coords=load_image_and_coordinates("image.png")
+img,coords=load_image_and_coordinates("image.png",scale=0.05)
 
 h,w,_=img.shape
 
@@ -122,7 +132,7 @@ X=img2batch(coords).to(device)
 Y=img2batch(img).to(device)
 
 
-num_epochs=1000
+num_epochs=10000
 model=create_model().to(device)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -132,8 +142,15 @@ for epoch in range(num_epochs):
     loss = criterion(outputs, Y)
     loss.backward()
     optimizer.step()
+    
+    decoded=batch2img(outputs,w,h)
+    imout=tensor_to_image(decoded*255)
+    imin=tensor_to_image(img*255)
+    image_placeholder1.image(imin, caption='input', use_column_width=True)
+    image_placeholder2.image(imout, caption='output', use_column_width=True)
+
+    
     report=f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}'
-    st.write(report)
-    print(report)
+    report_placeholder.write(report)
 
 
