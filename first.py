@@ -62,8 +62,7 @@ def show_images(original, predicted):
     st.image(predicted, caption='Predicted Image', use_column_width=True)
 
 
-
-def load_image_and_coordinates(file_name,scale=0.3):
+def load_image_as_tensor(file_name,scale=0.3):
     # Carica l'immagine utilizzando OpenCV
     image = cv2.imread(file_name)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Converte il formato dei colori da BGR a RGB
@@ -72,27 +71,34 @@ def load_image_and_coordinates(file_name,scale=0.3):
     h, w, _ = image.shape
     
     image=cv2.resize(image,(int(w*scale),int(h*scale)))
-    
-    # Ottieni le dimensioni dell'immagine
-    h, w, _ = image.shape
-    
-    # Genera le coordinate dei pixel utilizzando meshgrid e linspace
+    return torch.tensor(image, dtype=torch.float32)  # (3, h, w)
+
+
+def generate_coords_tensor(w,h):
+     # Genera le coordinate dei pixel utilizzando meshgrid e linspace
     x_coords = np.linspace(0, w - 1, w)
     y_coords = np.linspace(0, h - 1, h)
     xv, yv = np.meshgrid(x_coords, y_coords)
     
     # Concatena le coordinate dei pixel in un tensore (h, w, 2)
     pixel_coords = np.stack([xv, yv], axis=-1)
+    return torch.tensor(pixel_coords, dtype=torch.float32)  # (h, w, 2)
     
-    # Converti l'immagine e le coordinate dei pixel in tensori PyTorch
-    image_tensor = torch.tensor(image, dtype=torch.float32)  # (3, h, w)
-    pixel_coords_tensor = torch.tensor(pixel_coords, dtype=torch.float32)  # (h, w, 2)
+
+def load_image_and_coordinates(file_name,scale=0.3):
+    image=load_image_as_tensor(file_name=file_name,scale=scale)
+    # Ottieni le dimensioni dell'immagine
+    h, w, _ = image.shape
+    coords=generate_coords_tensor(w,h)
+    return image,coords
     
-    return image_tensor, pixel_coords_tensor
 
 
 def img2batch(img):
     return img.view(-1, img.shape[-1]).unsqueeze(0)
+
+def batch2img(batch,w,h):
+    return torch.reshape(batch, (w, h, 3))
 
 
 img,coords=load_image_and_coordinates("image.png")
