@@ -15,23 +15,23 @@ dtype = torch.float
 
 def create_model():
     model = nn.Sequential(
-        nn.Linear(2, 10),
+        nn.Linear(2, 100),
         nn.ReLU(),
-        nn.Linear(10, 10),
+        nn.Linear(100, 100),
         nn.ReLU(),
-        nn.Linear(10, 10),
+        nn.Linear(100, 100),
         nn.ReLU(),
-        nn.Linear(10, 10),
+        nn.Linear(100, 100),
         nn.ReLU(),
-        nn.Linear(10, 100),
+        nn.Linear(100, 100),
         nn.ReLU(),
-        nn.Linear(100, 10),
+        nn.Linear(100, 100),
         nn.ReLU(),
-        nn.Linear(10, 10),
+        nn.Linear(100, 100),
         nn.ReLU(),
-        nn.Linear(10, 10),
+        nn.Linear(100, 100),
         nn.ReLU(),
-        nn.Linear(10, 3),
+        nn.Linear(100, 3),
         nn.Sigmoid()
     )
     return model
