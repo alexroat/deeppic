@@ -18,8 +18,8 @@ dtype = torch.float
 class FourierLayer(nn.Module):
     def __init__(self, input_dim,output_dim):
         super(FourierLayer, self).__init__()
-        self.w=16*torch.pi*torch.randn((input_dim,output_dim)).to(device)
-        self.p=16*torch.pi*torch.randn(output_dim).to(device)
+        self.w=32*torch.pi*torch.randn((input_dim,output_dim)).to(device)
+        self.p=32*torch.pi*torch.randn(output_dim).to(device)
     def forward(self, x):
         y=torch.cos(torch.matmul(x,self.w)+self.p)
         return y
@@ -27,8 +27,8 @@ class FourierLayer(nn.Module):
 
 def create_model():
     model = nn.Sequential(
-        FourierLayer(2,2000),
-        nn.Linear(2000, 100),
+        FourierLayer(2,1000),
+        nn.Linear(1000, 100),
         nn.ReLU(),
         nn.Linear(100, 100),
         nn.ReLU(),
@@ -118,13 +118,20 @@ def batch2img(batch,w,h):
 
 
 def chunked_inference(model,X,dim=0,size=1000):
+    print(X.shape)
     sub_tensors = torch.split(X, size, dim=dim)
-    outputs=[ model(st) for st in sub_tensors]
-    output=torch.cat(outputs, dim=dim)
-    return output
+    
+    print(sub_tensors[0].shape)
+    with torch.no_grad():
+        outputs=[]
+        for i,st in enumerate(sub_tensors):
+            o=model(st)
+            outputs.append(o)
+            output=torch.cat(outputs, dim=dim)
+        return output
 
 
-img,coords=load_image_and_coordinates("image.png",scale=0.1)
+img,coords=load_image_and_coordinates("image.png",scale=0.5)
 
 h,w,_=img.shape
 
@@ -149,17 +156,25 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 for epoch in range(num_epochs):
     optimizer.zero_grad()
     
-    Xs,Ys=subsample((X,Y),1,3000)
+    Xs,Ys=subsample((X,Y),1,9000)
     
     outputs = model(Xs)
     loss = criterion(outputs, Ys)
     loss.backward()
     optimizer.step()
     
-    outputs = model(X)
+    report=f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}'
+    report_placeholder.write(report)
+    print(report)
+    
+    
+    
+    #outputs = model(X)
+    
+    if epoch%100:
+        continue
     
     outputs=chunked_inference(model,X,dim=1,size=1000)
-    
     decoded=batch2img(outputs,w,h)
     imout=tensor_to_image(decoded*255)
     imin=tensor_to_image(img*255)
