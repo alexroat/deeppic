@@ -3,7 +3,7 @@ Reference image
 ![Source Image](image.png) 
 
 Decoded image
-![Fifth Image](fifth.png)
+![Fifth Image](decoded.png)
 
 #### Overview:
 DeepPic is a project aimed at demonstrating how to approximate an image using a continuous function based on a dense neural network. The neural network takes pixel coordinates (x, y) as inputs and predicts the corresponding RGB values, showcasing the ability to represent images as continuous functions.
